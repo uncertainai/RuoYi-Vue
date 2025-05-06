@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.common.core.mapper.CommonMapper">
+    <sql id="allSummarySql">
+        select * from (
+            select
+            <foreach item="item" index="index" collection="columns" separator=",">
+                sum(${item.column}) as ${item.column}
+            </foreach>
+            from ${tableName}
+            <if test="query != null">
+                where 1=1
+                <foreach item="item" index="index" collection="query">
+                    <if test="item.value != null and item.value != ''">
+                        and ${item.column} ${item.cond}
+                        <if test="item.cond == 'between'">
+                            #{item.value[0]} and #{item.value[1]}
+                        </if>
+                        <if test="item.cond != 'between'">
+                            #{item.value}
+                        </if>
+                    </if>
+                </foreach>
+            </if>
+        ) t
+    </sql>
+
+    <sql id="summarySql">
+        select * from (
+        select
+        <foreach item="item" index="index" collection="groupBy" separator=",">
+            ${item.column}
+        </foreach>
+        <foreach item="item" index="index" collection="columns" separator="," open=",">
+            sum(${item.column}) as ${item.column}
+        </foreach>
+        from ${tableName}
+
+        <if test="query != null">
+            where 1=1
+            <foreach item="item" index="index" collection="query">
+                <if test="item.value != null and item.value != ''">
+                    and ${item.column} ${item.cond}
+                    <if test="item.cond == 'between'">
+                        #{item.value[0]} and #{item.value[1]}
+                    </if>
+                    <if test="item.cond != 'between'">
+                        #{item.value}
+                    </if>
+                </if>
+            </foreach>
+        </if>
+        <foreach item="item" index="index" collection="groupBy" separator="," open="group by">
+            ${item.column}
+        </foreach>
+        <if test="orderBy != null">
+            <foreach item="item" index="index" collection="orderBy" separator="," open="order by">
+                ${item.column}
+                <if test="item.desc == true">desc</if>
+                <if test="item.desc == false">asc</if>
+            </foreach>
+        </if>
+        ) t
+    </sql>
+
+    <insert id="batchInsertOrUpdate" parameterType="list">
+        select 1 from dual
+    </insert>
+</mapper>

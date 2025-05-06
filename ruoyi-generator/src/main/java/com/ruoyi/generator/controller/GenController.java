@@ -1,7 +1,6 @@
 package com.ruoyi.generator.controller;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,19 +17,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.alibaba.druid.DbType;
-import com.alibaba.druid.sql.SQLUtils;
-import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlCreateTableStatement;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.common.utils.sql.SqlUtil;
-import com.ruoyi.generator.config.GenConfig;
 import com.ruoyi.generator.domain.GenTable;
 import com.ruoyi.generator.domain.GenTableColumn;
 import com.ruoyi.generator.service.IGenTableColumnService;
@@ -39,7 +31,7 @@ import com.ruoyi.generator.service.IGenTableService;
 /**
  * 代码生成 操作处理
  * 
- * @author ruoyi
+ * @author qiezi
  */
 @RestController
 @RequestMapping("/tool/gen")
@@ -64,11 +56,11 @@ public class GenController extends BaseController
     }
 
     /**
-     * 获取代码生成信息
+     * 修改代码生成业务
      */
     @PreAuthorize("@ss.hasPermi('tool:gen:query')")
     @GetMapping(value = "/{tableId}")
-    public AjaxResult getInfo(@PathVariable("tableId") Long tableId)
+    public AjaxResult getInfo(@PathVariable Long tableId)
     {
         GenTable table = genTableService.selectGenTableById(tableId);
         List<GenTable> tables = genTableService.selectGenTableAll();
@@ -77,7 +69,7 @@ public class GenController extends BaseController
         map.put("info", table);
         map.put("rows", list);
         map.put("tables", tables);
-        return success(map);
+        return AjaxResult.success(map);
     }
 
     /**
@@ -117,45 +109,8 @@ public class GenController extends BaseController
         String[] tableNames = Convert.toStrArray(tables);
         // 查询表信息
         List<GenTable> tableList = genTableService.selectDbTableListByNames(tableNames);
-        genTableService.importGenTable(tableList, SecurityUtils.getUsername());
-        return success();
-    }
-
-    /**
-     * 创建表结构（保存）
-     */
-    @PreAuthorize("@ss.hasRole('admin')")
-    @Log(title = "创建表", businessType = BusinessType.OTHER)
-    @PostMapping("/createTable")
-    public AjaxResult createTableSave(String sql)
-    {
-        try
-        {
-            SqlUtil.filterKeyword(sql);
-            List<SQLStatement> sqlStatements = SQLUtils.parseStatements(sql, DbType.mysql);
-            List<String> tableNames = new ArrayList<>();
-            for (SQLStatement sqlStatement : sqlStatements)
-            {
-                if (sqlStatement instanceof MySqlCreateTableStatement)
-                {
-                    MySqlCreateTableStatement createTableStatement = (MySqlCreateTableStatement) sqlStatement;
-                    if (genTableService.createTable(createTableStatement.toString()))
-                    {
-                        String tableName = createTableStatement.getTableName().replaceAll("`", "");
-                        tableNames.add(tableName);
-                    }
-                }
-            }
-            List<GenTable> tableList = genTableService.selectDbTableListByNames(tableNames.toArray(new String[tableNames.size()]));
-            String operName = SecurityUtils.getUsername();
-            genTableService.importGenTable(tableList, operName);
-            return AjaxResult.success();
-        }
-        catch (Exception e)
-        {
-            logger.error(e.getMessage(), e);
-            return AjaxResult.error("创建表结构异常");
-        }
+        genTableService.importGenTable(tableList);
+        return AjaxResult.success();
     }
 
     /**
@@ -168,7 +123,7 @@ public class GenController extends BaseController
     {
         genTableService.validateEdit(genTable);
         genTableService.updateGenTable(genTable);
-        return success();
+        return AjaxResult.success();
     }
 
     /**
@@ -177,10 +132,10 @@ public class GenController extends BaseController
     @PreAuthorize("@ss.hasPermi('tool:gen:remove')")
     @Log(title = "代码生成", businessType = BusinessType.DELETE)
     @DeleteMapping("/{tableIds}")
-    public AjaxResult remove(@PathVariable("tableIds") Long[] tableIds)
+    public AjaxResult remove(@PathVariable Long[] tableIds)
     {
         genTableService.deleteGenTableByIds(tableIds);
-        return success();
+        return AjaxResult.success();
     }
 
     /**
@@ -191,7 +146,7 @@ public class GenController extends BaseController
     public AjaxResult preview(@PathVariable("tableId") Long tableId) throws IOException
     {
         Map<String, String> dataMap = genTableService.previewCode(tableId);
-        return success(dataMap);
+        return AjaxResult.success(dataMap);
     }
 
     /**
@@ -214,12 +169,8 @@ public class GenController extends BaseController
     @GetMapping("/genCode/{tableName}")
     public AjaxResult genCode(@PathVariable("tableName") String tableName)
     {
-        if (!GenConfig.isAllowOverwrite())
-        {
-            return AjaxResult.error("【系统预设】不允许生成文件覆盖到本地");
-        }
         genTableService.generatorCode(tableName);
-        return success();
+        return AjaxResult.success();
     }
 
     /**
@@ -231,7 +182,7 @@ public class GenController extends BaseController
     public AjaxResult synchDb(@PathVariable("tableName") String tableName)
     {
         genTableService.synchDb(tableName);
-        return success();
+        return AjaxResult.success();
     }
 
     /**
@@ -255,7 +206,7 @@ public class GenController extends BaseController
         response.reset();
         response.addHeader("Access-Control-Allow-Origin", "*");
         response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
-        response.setHeader("Content-Disposition", "attachment; filename=\"ruoyi.zip\"");
+        response.setHeader("Content-Disposition", "attachment; filename=\"qiezi.zip\"");
         response.addHeader("Content-Length", "" + data.length);
         response.setContentType("application/octet-stream; charset=UTF-8");
         IOUtils.write(data, response.getOutputStream());

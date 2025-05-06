@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,12 +19,15 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -70,12 +74,15 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.CTMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.annotation.Excel.ColumnType;
 import com.ruoyi.common.annotation.Excel.Type;
 import com.ruoyi.common.annotation.Excels;
 import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.SummaryColumn;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.exception.UtilException;
 import com.ruoyi.common.utils.DateUtils;
@@ -207,9 +214,22 @@ public class ExcelUtil<T>
      */
     public String[] excludeFields;
 
+    /**
+     * 指定列属性
+     */
+    public List<String> onlyFields;
+
     public ExcelUtil(Class<T> clazz)
     {
         this.clazz = clazz;
+    }
+
+    public ExcelUtil(Class<T> clazz, List<SummaryColumn> columns)
+    {
+        this.clazz = clazz;
+        if (CollectionUtils.isNotEmpty(columns)) {
+            onlyFields = columns.stream().map(SummaryColumn::getField).collect(Collectors.toList());
+        }
     }
 
     /**
@@ -1894,5 +1914,147 @@ public class ExcelUtil<T>
             log.error("获取对象异常{}", e.getMessage());
         }
         return method;
+    }
+
+    public List<T> convFile(MultipartFile file) {
+        Map<String, Field> excelHeadFieldMap = new HashMap<>();
+        Field[] typeFields = FieldUtils.getAllFields(clazz);
+        for (Field field : typeFields) {
+            Excel annotation = field.getAnnotation(Excel.class);
+            if (null == annotation) {
+                continue;
+            }
+            excelHeadFieldMap.put(annotation.name(), field);
+        }
+
+        List<T> list = new ArrayList<>();
+        try (InputStream inputStream = file.getInputStream();
+             Workbook workbook = new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Iterator<Row> rowIterator = sheet.iterator();
+            boolean isHeader = true;
+            Map<Integer, String> columnSort = new HashMap<>();
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+                if (isHeader) {
+                    isHeader = false;
+                    short lastCellNum = row.getLastCellNum();
+                    for (int i = 0; i < lastCellNum; i++) {
+                        Cell cell = row.getCell(i);
+                        if (null == cell) {
+                            log.info("没有获取到cell对象: {}行, {}列", row.getRowNum(), i);
+                            continue;
+                        }
+                        String headName = cell.getStringCellValue();
+                        if (StringUtils.isNotEmpty(headName)) {
+                            columnSort.put(i, headName);
+                        }
+                    }
+                    continue; // Skip the header row
+                }
+
+                T t = clazz.getConstructor().newInstance();
+
+                for (Map.Entry<Integer, String> columnSortEntry : columnSort.entrySet()) {
+                    Integer cellNum = columnSortEntry.getKey();
+                    String cellName = columnSortEntry.getValue();
+                    Field field = excelHeadFieldMap.get(cellName);
+                    String cellValue = getCellValueAsString(field, row.getCell(cellNum));
+                    if (field == null) {
+                        log.info("没有字段数据: cellName: {}, cellNum: {}", cellName, cellNum);
+                    }
+                    String fieldName = field.getName();
+                    Method setMethod = clazz.getMethod("set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1), field.getType());
+                    Object value = convCellValue(field, cellValue);
+                    setMethod.invoke(t, value);
+                }
+                list.add(t);
+            }
+        } catch (Exception e) {
+            log.error("数据转换异常", e);
+        }
+        return list;
+    }
+
+    public static String getCellValueAsString(Field field, Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        Excel excel = field.getAnnotation(Excel.class);
+        switch (cell.getCellType()) {
+            case FORMULA:
+                // 处理公式单元格
+                switch (cell.getCachedFormulaResultType()) {
+                    case STRING:
+                        if (StringUtils.isNotEmpty(excel.dateFormat())) {
+                            return DateUtils.parseDateToStr(excel.dateFormat(), DateUtils.parseDate(cell.getRichStringCellValue().getString()));
+                        }
+                        return cell.getRichStringCellValue().getString();
+                    case NUMERIC:
+                        if (DateUtil.isCellDateFormatted(cell)) {
+                            String dateFormat = DateUtils.YYYY_MM_DD_HH_MM_SS;
+                            if (StringUtils.isNotEmpty(excel.dateFormat())) {
+                                dateFormat = excel.dateFormat();
+                            } else if (field.getType() == String.class) {
+                                dateFormat = DateUtils.YYYY_MM_DD;
+                            }
+                            return DateUtils.parseDateToStr(dateFormat, cell.getDateCellValue());
+                        } else {
+                            // 使用 BigDecimal 处理数值，避免浮点数精度问题
+                            BigDecimal bd = BigDecimal.valueOf(cell.getNumericCellValue());
+                            return bd.stripTrailingZeros().toPlainString();
+                        }
+                    case BOOLEAN:
+                        return String.valueOf(cell.getBooleanCellValue());
+                    default:
+                        return "";
+                }
+            case STRING:
+                if (StringUtils.isNotEmpty(excel.dateFormat())) {
+                    return DateUtils.parseDateToStr(excel.dateFormat(), DateUtils.parseDate(cell.getRichStringCellValue().getString()));
+                }
+                return cell.getRichStringCellValue().getString();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    String dateFormat = DateUtils.YYYY_MM_DD_HH_MM_SS;
+                    if (StringUtils.isNotEmpty(excel.dateFormat())) {
+                        dateFormat = excel.dateFormat();
+                    } else if (field.getType() == String.class) {
+                        dateFormat = DateUtils.YYYY_MM_DD;
+                    }
+                    return DateUtils.parseDateToStr(dateFormat, cell.getDateCellValue());
+                } else {
+                    // 使用 BigDecimal 处理数值，避免浮点数精度问题
+                    BigDecimal bd = BigDecimal.valueOf(cell.getNumericCellValue());
+                    return bd.stripTrailingZeros().toPlainString();
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+//            case FORMULA:
+//                return cell.getStringCellValue();
+            default:
+                return null;
+        }
+    }
+
+    public static Object convCellValue(Field field, String cellValue) {
+        if (null == cellValue || field.getType() == String.class) {
+            return cellValue;
+        } else if (field.getType() == Integer.class) {
+            return Integer.parseInt(cellValue.split("\\.")[0]);
+        } else if (field.getType() == Long.class) {
+            return Long.parseLong(cellValue.split("\\.")[0]);
+        } else if (field.getType() == Float.class) {
+            return Float.parseFloat(cellValue);
+        } else if (field.getType() == Double.class) {
+            return Double.parseDouble(cellValue);
+        } else if (field.getType() == BigInteger.class) {
+            return BigInteger.valueOf(Long.parseLong(cellValue.split("\\.")[0]));
+        } else if (field.getType() == BigDecimal.class) {
+            return new BigDecimal(cellValue);
+        } else if (field.getType() == Date.class) {
+            return DateUtils.parseDate(cellValue);
+        }
+        throw new RuntimeException("不支持的字段类型: " + field.getType().getSimpleName());
     }
 }

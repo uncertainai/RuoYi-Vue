@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 // 查询${functionName}列表
-export function list${BusinessName}(query) {
+export function list(query) {
   return request({
     url: '/${moduleName}/${businessName}/list',
     method: 'get',
@@ -9,8 +9,17 @@ export function list${BusinessName}(query) {
   })
 }
 
+// 统计${functionName}
+export function getSummary(query) {
+  return request({
+    url: '/${moduleName}/${businessName}/getSummary',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询${functionName}详细
-export function get${BusinessName}(${pkColumn.javaField}) {
+export function get(${pkColumn.javaField}) {
   return request({
     url: '/${moduleName}/${businessName}/' + ${pkColumn.javaField},
     method: 'get'
@@ -18,7 +27,7 @@ export function get${BusinessName}(${pkColumn.javaField}) {
 }
 
 // 新增${functionName}
-export function add${BusinessName}(data) {
+export function add(data) {
   return request({
     url: '/${moduleName}/${businessName}',
     method: 'post',
@@ -27,7 +36,7 @@ export function add${BusinessName}(data) {
 }
 
 // 修改${functionName}
-export function update${BusinessName}(data) {
+export function update(data) {
   return request({
     url: '/${moduleName}/${businessName}',
     method: 'put',
@@ -36,9 +45,35 @@ export function update${BusinessName}(data) {
 }
 
 // 删除${functionName}
-export function del${BusinessName}(${pkColumn.javaField}) {
+export function del(${pkColumn.javaField}) {
   return request({
     url: '/${moduleName}/${businessName}/' + ${pkColumn.javaField},
     method: 'delete'
   })
 }
+
+
+// 查询列信息
+export function columns() {
+  return request({
+    url: '/${moduleName}/${businessName}/columns',
+    method: 'get'
+  })
+}
+
+// 数据分析
+export function summary(data) {
+  return request({
+    url: '/${moduleName}/${businessName}/summary?pageNum=' + data.pageNum + '&pageSize=' + data.pageSize,
+    method: 'post',
+    data: data
+  })
+}
+// 数据分析-汇总
+export function allSummary(data) {
+    return request({
+      url: '/${moduleName}/${businessName}/allSummary',
+      method: 'post',
+      data: data
+    })
+  }

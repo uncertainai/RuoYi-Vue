@@ -23,7 +23,7 @@
         <bitwalker.version>1.21</bitwalker.version>
         <springdoc.version>2.3.0</springdoc.version>
         <kaptcha.version>2.3.3</kaptcha.version>
-        <pagehelper.boot.version>2.1.0</pagehelper.boot.version>
+        <pagehelper.boot.version>1.4.6</pagehelper.boot.version>
         <fastjson.version>2.0.45</fastjson.version>
         <oshi.version>6.4.12</oshi.version>
         <commons.io.version>2.15.1</commons.io.version>

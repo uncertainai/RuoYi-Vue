@@ -55,6 +55,10 @@ public class GenConstants
     public static final String[] COLUMNNAME_NOT_QUERY = { "id", "create_by", "create_time", "del_flag", "update_by",
             "update_time", "remark" };
 
+/** 页面不需要统计字段 */
+public static final String[] COLUMNNAME_NOT_SUMMARY = { "id", "create_by", "create_time", "del_flag", "update_by",
+"update_time", "remark" };
+
     /** Entity基类字段 */
     public static final String[] BASE_ENTITY = { "createBy", "createTime", "updateBy", "updateTime", "remark" };
 

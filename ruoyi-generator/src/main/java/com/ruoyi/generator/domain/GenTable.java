@@ -11,7 +11,7 @@ import com.ruoyi.common.utils.StringUtils;
 /**
  * 业务表 gen_table
  * 
- * @author ruoyi
+ * @author qiezi
  */
 public class GenTable extends BaseEntity
 {
@@ -40,9 +40,6 @@ public class GenTable extends BaseEntity
 
     /** 使用的模板（crud单表操作 tree树表操作 sub主子表操作） */
     private String tplCategory;
-
-    /** 前端类型（element-ui模版 element-plus模版） */
-    private String tplWebType;
 
     /** 生成包路径 */
     @NotBlank(message = "生成包路径不能为空")
@@ -93,7 +90,7 @@ public class GenTable extends BaseEntity
     private String treeName;
 
     /** 上级菜单ID字段 */
-    private Long parentMenuId;
+    private String parentMenuId;
 
     /** 上级菜单名称字段 */
     private String parentMenuName;
@@ -166,16 +163,6 @@ public class GenTable extends BaseEntity
     public void setTplCategory(String tplCategory)
     {
         this.tplCategory = tplCategory;
-    }
-
-    public String getTplWebType()
-    {
-        return tplWebType;
-    }
-
-    public void setTplWebType(String tplWebType)
-    {
-        this.tplWebType = tplWebType;
     }
 
     public String getPackageName()
@@ -318,12 +305,12 @@ public class GenTable extends BaseEntity
         this.treeName = treeName;
     }
 
-    public Long getParentMenuId()
+    public String getParentMenuId()
     {
         return parentMenuId;
     }
 
-    public void setParentMenuId(Long parentMenuId)
+    public void setParentMenuId(String parentMenuId)
     {
         this.parentMenuId = parentMenuId;
     }

@@ -11,7 +11,7 @@ import com.ruoyi.generator.domain.GenTableColumn;
 /**
  * 代码生成器 工具类
  * 
- * @author ruoyi
+ * @author qiezi
  */
 public class GenUtils
 {
@@ -75,6 +75,12 @@ public class GenUtils
             else
             {
                 column.setJavaType(GenConstants.TYPE_LONG);
+            }
+
+            // 统计字段
+            if (!arraysContains(GenConstants.COLUMNNAME_NOT_SUMMARY, columnName) && !column.isPk())
+            {
+                column.setIsSummary(GenConstants.REQUIRE);
             }
         }
 

@@ -1,7 +1,8 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
 #foreach($column in $columns)
+#set($velocityCount=$velocityCount+1)
 #if($column.query)
 #set($dictType=$column.dictType)
 #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
@@ -12,7 +13,7 @@
 #set($comment=$column.columnComment)
 #end
 #if($column.htmlType == "input")
-      <el-form-item label="${comment}" prop="${column.javaField}">
+      <el-form-item label="${comment}" prop="${column.javaField}" #if($velocityCount != 2) v-show="showSearch" #end>
         <el-input
           v-model="queryParams.${column.javaField}"
           placeholder="请输入${comment}"
@@ -21,7 +22,7 @@
         />
       </el-form-item>
 #elseif(($column.htmlType == "select" || $column.htmlType == "radio") && "" != $dictType)
-      <el-form-item label="${comment}" prop="${column.javaField}">
+      <el-form-item label="${comment}" prop="${column.javaField}" #if($velocityCount != 2) v-show="showSearch" #end>
         <el-select v-model="queryParams.${column.javaField}" placeholder="请选择${comment}" clearable>
           <el-option
             v-for="dict in dict.type.${dictType}"
@@ -32,26 +33,26 @@
         </el-select>
       </el-form-item>
 #elseif(($column.htmlType == "select" || $column.htmlType == "radio") && $dictType)
-      <el-form-item label="${comment}" prop="${column.javaField}">
+      <el-form-item label="${comment}" prop="${column.javaField}" #if($velocityCount != 2) v-show="showSearch" #end>
         <el-select v-model="queryParams.${column.javaField}" placeholder="请选择${comment}" clearable>
           <el-option label="请选择字典生成" value="" />
         </el-select>
       </el-form-item>
 #elseif($column.htmlType == "datetime" && $column.queryType != "BETWEEN")
-      <el-form-item label="${comment}" prop="${column.javaField}">
+      <el-form-item label="${comment}" prop="${column.javaField}" #if($velocityCount != 2) v-show="showSearch" #end>
         <el-date-picker clearable
           v-model="queryParams.${column.javaField}"
           type="date"
-          value-format="yyyy-MM-dd"
+          value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择${comment}">
         </el-date-picker>
       </el-form-item>
 #elseif($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
-      <el-form-item label="${comment}">
+      <el-form-item label="${comment}" #if($velocityCount != 2) v-show="showSearch" #end>
         <el-date-picker
           v-model="daterange${AttrName}"
           style="width: 240px"
-          value-format="yyyy-MM-dd"
+          value-format="yyyy-MM-dd HH:mm:ss"
           type="daterange"
           range-separator="-"
           start-placeholder="开始日期"
@@ -64,6 +65,8 @@
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-s-data" size="mini" @click="summaryOpen = true">统计</el-button>
+        <el-link @click="showSearch = !showSearch"> {{ showSearch ? '收起条件' : '更多条件' }}<i class="el-icon-view el-icon--right"></i> </el-link>
       </el-form-item>
     </el-form>
 
@@ -75,7 +78,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['${permissionPrefix}:add']"
+          v-hasPermi="['${moduleName}:${businessName}:add']"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -86,7 +89,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['${permissionPrefix}:edit']"
+          v-hasPermi="['${moduleName}:${businessName}:edit']"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -97,7 +100,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['${permissionPrefix}:remove']"
+          v-hasPermi="['${moduleName}:${businessName}:remove']"
         >删除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -107,8 +110,29 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['${permissionPrefix}:export']"
+          v-hasPermi="['${moduleName}:${businessName}:export']"
         >导出</el-button>
+
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="importOpen = true"
+          v-hasPermi="['${moduleName}:${businessName}:export']"
+        >导入</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="downloadImportModule"
+          v-hasPermi="['${moduleName}:${businessName}:export']"
+        >下载导入模板</el-button>
+      </el-col>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -128,7 +152,7 @@
 #elseif($column.list && $column.htmlType == "datetime")
       <el-table-column label="${comment}" align="center" prop="${javaField}" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.${javaField}, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.${javaField}, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
 #elseif($column.list && $column.htmlType == "imageUpload")
@@ -158,14 +182,14 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['${permissionPrefix}:edit']"
+            v-hasPermi="['${moduleName}:${businessName}:edit']"
           >修改</el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['${permissionPrefix}:remove']"
+            v-hasPermi="['${moduleName}:${businessName}:remove']"
           >删除</el-button>
         </template>
       </el-table-column>
@@ -198,11 +222,11 @@
           <el-input v-model="form.${field}" placeholder="请输入${comment}" />
         </el-form-item>
 #elseif($column.htmlType == "imageUpload")
-        <el-form-item label="${comment}" prop="${field}">
+        <el-form-item label="${comment}">
           <image-upload v-model="form.${field}"/>
         </el-form-item>
 #elseif($column.htmlType == "fileUpload")
-        <el-form-item label="${comment}" prop="${field}">
+        <el-form-item label="${comment}">
           <file-upload v-model="form.${field}"/>
         </el-form-item>
 #elseif($column.htmlType == "editor")
@@ -216,11 +240,8 @@
               v-for="dict in dict.type.${dictType}"
               :key="dict.value"
               :label="dict.label"
-#if($column.javaType == "Integer" || $column.javaType == "Long")
-              :value="parseInt(dict.value)"
-#else
-              :value="dict.value"
-#end
+              #if($column.javaType == "Integer" || $column.javaType == "Long"):value="parseInt(dict.value)"#else:value="dict.value"#end
+
             ></el-option>
           </el-select>
         </el-form-item>
@@ -231,7 +252,7 @@
           </el-select>
         </el-form-item>
 #elseif($column.htmlType == "checkbox" && "" != $dictType)
-        <el-form-item label="${comment}" prop="${field}">
+        <el-form-item label="${comment}">
           <el-checkbox-group v-model="form.${field}">
             <el-checkbox
               v-for="dict in dict.type.${dictType}"
@@ -242,27 +263,24 @@
           </el-checkbox-group>
         </el-form-item>
 #elseif($column.htmlType == "checkbox" && $dictType)
-        <el-form-item label="${comment}" prop="${field}">
+        <el-form-item label="${comment}">
           <el-checkbox-group v-model="form.${field}">
             <el-checkbox>请选择字典生成</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 #elseif($column.htmlType == "radio" && "" != $dictType)
-        <el-form-item label="${comment}" prop="${field}">
+        <el-form-item label="${comment}">
           <el-radio-group v-model="form.${field}">
             <el-radio
               v-for="dict in dict.type.${dictType}"
               :key="dict.value"
-#if($column.javaType == "Integer" || $column.javaType == "Long")
-              :label="parseInt(dict.value)"
-#else
-              :label="dict.value"
-#end
+              #if($column.javaType == "Integer" || $column.javaType == "Long"):label="parseInt(dict.value)"#else:label="dict.value"#end
+
             >{{dict.label}}</el-radio>
           </el-radio-group>
         </el-form-item>
 #elseif($column.htmlType == "radio" && $dictType)
-        <el-form-item label="${comment}" prop="${field}">
+        <el-form-item label="${comment}">
           <el-radio-group v-model="form.${field}">
             <el-radio label="1">请选择字典生成</el-radio>
           </el-radio-group>
@@ -349,11 +367,30 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+
+      <el-dialog title="数据统计" :visible.sync="summaryOpen" width="1000px">
+        <data-summary :onColumns="columns" :onSummary="data_summary" :onAllSummary="allSummary" ::exportUrl="'${moduleName}/${businessName}/summaryExport'"></data-summary>
+      </el-dialog>
+
+      <el-dialog title="数据导入" :visible.sync="importOpen" width="500px">
+        <el-upload
+          class="upload"
+          drag
+          :action="baseUrl + `/${moduleName}/${businessName}/importData`"
+          :headers="headers"
+          multiple>
+          <i class="el-icon-upload"></i>
+          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+          <div class="el-upload__tip" slot="tip">只能上传xlsx</div>
+        </el-upload>
+      </el-dialog>
   </div>
 </template>
 
 <script>
-import { list${BusinessName}, get${BusinessName}, del${BusinessName}, add${BusinessName}, update${BusinessName} } from "@/api/${moduleName}/${businessName}"
+import { list, get, del, add, update, getSummary, columns, summary as data_summary, allSummary } from "@/api/${moduleName}/${businessName}";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "${BusinessName}",
@@ -362,6 +399,10 @@ export default {
 #end
   data() {
     return {
+      baseUrl: process.env.VUE_APP_BASE_API,
+      headers: {
+        Authorization: "Bearer " + getToken(),
+      },
       // 遮罩层
       loading: true,
       // 选中数组
@@ -374,8 +415,8 @@ export default {
       single: true,
       // 非多个禁用
       multiple: true,
-      // 显示搜索条件
-      showSearch: true,
+      // 显示更多搜索条件
+      showSearch: false,
       // 总条数
       total: 0,
       // ${functionName}表格数据
@@ -388,6 +429,9 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      importOpen: false,
+      // 是否显示统计弹框
+      summaryOpen: false,
 #foreach ($column in $columns)
 #if($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
 #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
@@ -397,6 +441,7 @@ export default {
 #end
       // 查询参数
       queryParams: {
+        params: {},
         pageNum: 1,
         pageSize: 10,
 #foreach ($column in $columns)
@@ -405,6 +450,8 @@ export default {
 #end
 #end
       },
+      // 字段数据汇总
+      summary: {},
       // 表单参数
       form: {},
       // 表单校验
@@ -418,23 +465,35 @@ export default {
 #set($comment=$column.columnComment)
 #end
         $column.javaField: [
-          { required: true, message: "$comment不能为空", trigger: #if($column.htmlType == "select" || $column.htmlType == "radio")"change"#else"blur"#end }
+          { required: true, message: "$comment不能为空", trigger: #if($column.htmlType == "select")"change"#else"blur"#end }
         ]#if($foreach.count != $columns.size()),#end
 #end
 #end
       }
-    }
+    };
   },
   created() {
-    this.getList()
+    this.getList();
   },
   methods: {
+      columns,
+      data_summary,
+      allSummary,
+
+    downloadImportModule() {
+      this.$modal.msgSuccess('正在下载导入模板。。。');
+        this.download(
+          '/${moduleName}/${businessName}/downloadImportModule',
+          {},
+          `${businessName}.xlsx`
+        );
+    },
     /** 查询${functionName}列表 */
     getList() {
-      this.loading = true
+      this.loading = true;
 #foreach ($column in $columns)
 #if($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
-      this.queryParams.params = {}
+      this.queryParams.params = {};
 #break
 #end
 #end
@@ -442,53 +501,79 @@ export default {
 #if($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
 #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
       if (null != this.daterange${AttrName} && '' != this.daterange${AttrName}) {
-        this.queryParams.params["begin${AttrName}"] = this.daterange${AttrName}[0]
-        this.queryParams.params["end${AttrName}"] = this.daterange${AttrName}[1]
+        this.queryParams.params["begin${AttrName}"] = this.daterange${AttrName}[0];
+        this.queryParams.params["end${AttrName}"] = this.daterange${AttrName}[1];
       }
 #end
 #end
-      list${BusinessName}(this.queryParams).then(response => {
-        this.${businessName}List = response.rows
-        this.total = response.total
-        this.loading = false
-      })
+      list(this.queryParams).then(response => {
+        this.${businessName}List = response.rows;
+        this.total = response.total;
+        this.loading = false;
+      });
+    },
+
+    /** 查询${functionName}数据汇总 */
+    getSummary() {
+      this.loading = true;
+#foreach ($column in $columns)
+#if($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
+      this.queryParams.params = {};
+#break
+#end
+#end
+#foreach ($column in $columns)
+#if($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
+#set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+      if (null != this.daterange${AttrName} && '' != this.daterange${AttrName}) {
+        this.queryParams.params["begin${AttrName}"] = this.daterange${AttrName}[0];
+        this.queryParams.params["end${AttrName}"] = this.daterange${AttrName}[1];
+      }
+#end
+#end
+      getSummary(this.queryParams).then(response => {
+        this.summary = response.data;
+        this.loading = false;
+      });
     },
     // 取消按钮
     cancel() {
-      this.open = false
-      this.reset()
+      this.open = false;
+      this.reset();
     },
     // 表单重置
     reset() {
       this.form = {
 #foreach ($column in $columns)
-#if($column.htmlType == "checkbox")
+#if($column.htmlType == "radio")
+        $column.javaField: #if($column.javaType == "Integer" || $column.javaType == "Long")0#else"0"#end#if($foreach.count != $columns.size()),#end
+#elseif($column.htmlType == "checkbox")
         $column.javaField: []#if($foreach.count != $columns.size()),#end
 #else
         $column.javaField: null#if($foreach.count != $columns.size()),#end
 #end
 #end
-      }
+      };
 #if($table.sub)
-      this.${subclassName}List = []
+      this.${subclassName}List = [];
 #end
-      this.resetForm("form")
+      this.resetForm("form");
     },
     /** 搜索按钮操作 */
     handleQuery() {
-      this.queryParams.pageNum = 1
-      this.getList()
+      this.queryParams.pageNum = 1;
+      this.getList();
     },
     /** 重置按钮操作 */
     resetQuery() {
 #foreach ($column in $columns)
 #if($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
 #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
-      this.daterange${AttrName} = []
+      this.daterange${AttrName} = [];
 #end
 #end
-      this.resetForm("queryForm")
-      this.handleQuery()
+      this.resetForm("queryForm");
+      this.handleQuery();
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
@@ -498,27 +583,27 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
-      this.reset()
-      this.open = true
-      this.title = "添加${functionName}"
+      this.reset();
+      this.open = true;
+      this.title = "添加${functionName}";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
-      this.reset()
+      this.reset();
       const ${pkColumn.javaField} = row.${pkColumn.javaField} || this.ids
-      get${BusinessName}(${pkColumn.javaField}).then(response => {
-        this.form = response.data
+      get(${pkColumn.javaField}).then(response => {
+        this.form = response.data;
 #foreach ($column in $columns)
 #if($column.htmlType == "checkbox")
-        this.form.$column.javaField = this.form.${column.javaField}.split(",")
+        this.form.$column.javaField = this.form.${column.javaField}.split(",");
 #end
 #end
 #if($table.sub)
-        this.${subclassName}List = response.data.${subclassName}List
+        this.${subclassName}List = response.data.${subclassName}List;
 #end
-        this.open = true
-        this.title = "修改${functionName}"
-      })
+        this.open = true;
+        this.title = "修改${functionName}";
+      });
     },
     /** 提交按钮 */
     submitForm() {
@@ -526,64 +611,64 @@ export default {
         if (valid) {
 #foreach ($column in $columns)
 #if($column.htmlType == "checkbox")
-          this.form.$column.javaField = this.form.${column.javaField}.join(",")
+          this.form.$column.javaField = this.form.${column.javaField}.join(",");
 #end
 #end
 #if($table.sub)
-          this.form.${subclassName}List = this.${subclassName}List
+          this.form.${subclassName}List = this.${subclassName}List;
 #end
           if (this.form.${pkColumn.javaField} != null) {
-            update${BusinessName}(this.form).then(response => {
-              this.#[[$modal]]#.msgSuccess("修改成功")
-              this.open = false
-              this.getList()
-            })
+            update(this.form).then(response => {
+              this.#[[$modal]]#.msgSuccess("修改成功");
+              this.open = false;
+              this.getList();
+            });
           } else {
-            add${BusinessName}(this.form).then(response => {
-              this.#[[$modal]]#.msgSuccess("新增成功")
-              this.open = false
-              this.getList()
-            })
+            add(this.form).then(response => {
+              this.#[[$modal]]#.msgSuccess("新增成功");
+              this.open = false;
+              this.getList();
+            });
           }
         }
-      })
+      });
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const ${pkColumn.javaField}s = row.${pkColumn.javaField} || this.ids
+      const ${pkColumn.javaField}s = row.${pkColumn.javaField} || this.ids;
       this.#[[$modal]]#.confirm('是否确认删除${functionName}编号为"' + ${pkColumn.javaField}s + '"的数据项？').then(function() {
-        return del${BusinessName}(${pkColumn.javaField}s)
+        return del(${pkColumn.javaField}s);
       }).then(() => {
-        this.getList()
-        this.#[[$modal]]#.msgSuccess("删除成功")
-      }).catch(() => {})
+        this.getList();
+        this.#[[$modal]]#.msgSuccess("删除成功");
+      }).catch(() => {});
     },
 #if($table.sub)
 	/** ${subTable.functionName}序号 */
     row${subClassName}Index({ row, rowIndex }) {
-      row.index = rowIndex + 1
+      row.index = rowIndex + 1;
     },
     /** ${subTable.functionName}添加按钮操作 */
     handleAdd${subClassName}() {
-      let obj = {}
+      let obj = {};
 #foreach($column in $subTable.columns)
 #if($column.pk || $column.javaField == ${subTableFkclassName})
 #elseif($column.list && "" != $javaField)
-      obj.$column.javaField = ""
+      obj.$column.javaField = "";
 #end
 #end
-      this.${subclassName}List.push(obj)
+      this.${subclassName}List.push(obj);
     },
     /** ${subTable.functionName}删除按钮操作 */
     handleDelete${subClassName}() {
       if (this.checked${subClassName}.length == 0) {
-        this.#[[$modal]]#.msgError("请先选择要删除的${subTable.functionName}数据")
+        this.#[[$modal]]#.msgError("请先选择要删除的${subTable.functionName}数据");
       } else {
-        const ${subclassName}List = this.${subclassName}List
-        const checked${subClassName} = this.checked${subClassName}
+        const ${subclassName}List = this.${subclassName}List;
+        const checked${subClassName} = this.checked${subClassName};
         this.${subclassName}List = ${subclassName}List.filter(function(item) {
           return checked${subClassName}.indexOf(item.index) == -1
-        })
+        });
       }
     },
     /** 复选框选中数据 */
@@ -598,5 +683,5 @@ export default {
       }, `${businessName}_#[[${new Date().getTime()}]]#.xlsx`)
     }
   }
-}
+};
 </script>

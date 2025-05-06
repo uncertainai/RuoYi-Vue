@@ -7,7 +7,7 @@ import com.ruoyi.common.utils.StringUtils;
 /**
  * 代码生成业务字段表 gen_table_column
  * 
- * @author ruoyi
+ * @author qiezi
  */
 public class GenTableColumn extends BaseEntity
 {
@@ -55,6 +55,9 @@ public class GenTableColumn extends BaseEntity
 
     /** 是否查询字段（1是） */
     private String isQuery;
+
+    /** 是否统计字段（1是） */
+    private String isSummary;
 
     /** 查询方式（EQ等于、NE不等于、GT大于、LT小于、LIKE模糊、BETWEEN范围） */
     private String queryType;
@@ -281,6 +284,21 @@ public class GenTableColumn extends BaseEntity
     public boolean isQuery(String isQuery)
     {
         return isQuery != null && StringUtils.equals("1", isQuery);
+    }
+
+    public void setIsSummary(String isSummary)
+    {
+        this.isSummary = isSummary;
+    }
+
+    public boolean isSummary()
+    {
+        return isSummary(this.isSummary);
+    }
+
+    public boolean isSummary(String isSummary)
+    {
+        return isSummary != null && StringUtils.equals("1", isSummary);
     }
 
     public void setQueryType(String queryType)
