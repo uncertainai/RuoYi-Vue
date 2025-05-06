@@ -113,7 +113,7 @@ public class MyBatisConfig
         return resources.toArray(new Resource[resources.size()]);
     }
 
-    @Bean
+    @Bean(name = "sqlSessionFactory")
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception
     {
         String typeAliasesPackage = env.getProperty("mybatis.typeAliasesPackage");
@@ -122,11 +122,18 @@ public class MyBatisConfig
         typeAliasesPackage = setTypeAliasesPackage(typeAliasesPackage);
         VFS.addImplClass(SpringBootVFS.class);
 
-        final SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
+        SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
         sessionFactory.setDataSource(dataSource);
         sessionFactory.setTypeAliasesPackage(typeAliasesPackage);
         sessionFactory.setMapperLocations(resolveMapperLocations(StringUtils.split(mapperLocations, ",")));
         sessionFactory.setConfigLocation(new DefaultResourceLoader().getResource(configLocation));
+        
+        // 设置类型处理器
+        sessionFactory.setTypeHandlersPackage("com.ruoyi.common.core.mybatis.handler");
+        
+        // 设置类型别名包
+        sessionFactory.setTypeAliasesPackage("com.ruoyi.**.domain");
+        
         return sessionFactory.getObject();
     }
 }

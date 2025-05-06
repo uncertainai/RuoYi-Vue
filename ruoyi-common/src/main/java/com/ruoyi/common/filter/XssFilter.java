@@ -1,16 +1,14 @@
 package com.ruoyi.common.filter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.enums.HttpMethod;
 
@@ -24,19 +22,17 @@ public class XssFilter implements Filter
     /**
      * 排除链接
      */
-    public List<String> excludes = new ArrayList<>();
+    public String[] excludes = new String[] {};
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException
     {
-        String tempExcludes = filterConfig.getInitParameter("excludes");
-        if (StringUtils.isNotEmpty(tempExcludes))
+        String temp = filterConfig.getInitParameter("excludes");
+        if (StringUtils.isNotEmpty(temp))
         {
-            String[] urls = tempExcludes.split(",");
-            for (String url : urls)
-            {
-                excludes.add(url);
-            }
+            String[] url = temp.split(",");
+            excludes = new String[url.length];
+            System.arraycopy(url, 0, excludes, 0, url.length);
         }
     }
 
@@ -64,7 +60,14 @@ public class XssFilter implements Filter
         {
             return true;
         }
-        return StringUtils.matches(url, excludes);
+        for (String exclude : excludes)
+        {
+            if (url.matches(exclude))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

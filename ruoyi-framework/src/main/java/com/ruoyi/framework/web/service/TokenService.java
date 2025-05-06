@@ -3,7 +3,7 @@ package com.ruoyi.framework.web.service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ import eu.bitwalker.useragentutils.UserAgent;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import javax.crypto.SecretKey;
 
 /**
  * token验证处理
@@ -37,10 +38,6 @@ public class TokenService
     @Value("${token.header}")
     private String header;
 
-    // 令牌秘钥
-    @Value("${token.secret}")
-    private String secret;
-
     // 令牌有效期（默认30分钟）
     @Value("${token.expireTime}")
     private int expireTime;
@@ -53,6 +50,9 @@ public class TokenService
 
     @Autowired
     private RedisCache redisCache;
+
+    @Autowired
+    private SecretKey key;
 
     /**
      * 获取用户身份信息
@@ -179,7 +179,8 @@ public class TokenService
     {
         String token = Jwts.builder()
                 .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS512, secret).compact();
+                .signWith(key)
+                .compact();
         return token;
     }
 
@@ -192,9 +193,10 @@ public class TokenService
     private Claims parseToken(String token)
     {
         return Jwts.parser()
-                .setSigningKey(secret)
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**

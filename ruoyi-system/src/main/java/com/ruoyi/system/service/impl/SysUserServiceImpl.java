@@ -3,7 +3,7 @@ package com.ruoyi.system.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -501,7 +501,7 @@ public class SysUserServiceImpl implements ISysUserService
                 SysUser u = userMapper.selectUserByUserName(user.getUserName());
                 if (StringUtils.isNull(u))
                 {
-                    BeanValidators.validateWithException(validator, user);
+                    BeanValidators.validateWithException(user, SysUser.class);
                     deptService.checkDeptDataScope(user.getDeptId());
                     String password = configService.selectConfigByKey("sys.user.initPassword");
                     user.setPassword(SecurityUtils.encryptPassword(password));
@@ -512,7 +512,7 @@ public class SysUserServiceImpl implements ISysUserService
                 }
                 else if (isUpdateSupport)
                 {
-                    BeanValidators.validateWithException(validator, user);
+                    BeanValidators.validateWithException(user, SysUser.class);
                     checkUserAllowed(u);
                     checkUserDataScope(u.getUserId());
                     deptService.checkDeptDataScope(user.getDeptId());

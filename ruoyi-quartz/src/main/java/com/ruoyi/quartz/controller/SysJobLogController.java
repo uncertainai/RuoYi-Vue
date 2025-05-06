@@ -1,7 +1,7 @@
 package com.ruoyi.quartz.controller;
 
 import java.util.List;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -61,7 +61,7 @@ public class SysJobLogController extends BaseController
      */
     @PreAuthorize("@ss.hasPermi('monitor:job:query')")
     @GetMapping(value = "/{jobLogId}")
-    public AjaxResult getInfo(@PathVariable Long jobLogId)
+    public AjaxResult getInfo(@PathVariable("jobLogId") Long jobLogId)
     {
         return success(jobLogService.selectJobLogById(jobLogId));
     }
@@ -71,9 +71,9 @@ public class SysJobLogController extends BaseController
      * 删除定时任务调度日志
      */
     @PreAuthorize("@ss.hasPermi('monitor:job:remove')")
-    @Log(title = "定时任务调度日志", businessType = BusinessType.DELETE)
+    @Log(title = "调度日志", businessType = BusinessType.DELETE)
     @DeleteMapping("/{jobLogIds}")
-    public AjaxResult remove(@PathVariable Long[] jobLogIds)
+    public AjaxResult remove(@PathVariable("jobLogIds") Long[] jobLogIds)
     {
         return toAjax(jobLogService.deleteJobLogByIds(jobLogIds));
     }

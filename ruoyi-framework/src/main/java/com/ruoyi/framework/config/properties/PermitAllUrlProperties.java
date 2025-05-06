@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
-import org.apache.commons.lang3.RegExUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -26,13 +24,9 @@ import com.ruoyi.common.annotation.Anonymous;
 @Configuration
 public class PermitAllUrlProperties implements InitializingBean, ApplicationContextAware
 {
-    private static final Pattern PATTERN = Pattern.compile("\\{(.*?)\\}");
-
     private ApplicationContext applicationContext;
 
     private List<String> urls = new ArrayList<>();
-
-    public String ASTERISK = "*";
 
     @Override
     public void afterPropertiesSet()
@@ -43,16 +37,45 @@ public class PermitAllUrlProperties implements InitializingBean, ApplicationCont
         map.keySet().forEach(info -> {
             HandlerMethod handlerMethod = map.get(info);
 
-            // 获取方法上边的注解 替代path variable 为 *
+            // 获取方法上边的注解
             Anonymous method = AnnotationUtils.findAnnotation(handlerMethod.getMethod(), Anonymous.class);
             Optional.ofNullable(method).ifPresent(anonymous -> Objects.requireNonNull(info.getPatternsCondition().getPatterns())
-                    .forEach(url -> urls.add(RegExUtils.replaceAll(url, PATTERN, ASTERISK))));
+                    .forEach(url -> {
+                        // 确保URL模式以/开头
+                        if (!url.startsWith("/")) {
+                            url = "/" + url;
+                        }
+                        // 处理路径变量和通配符
+                        url = processUrlPattern(url);
+                        urls.add(url);
+                    }));
 
-            // 获取类上边的注解, 替代path variable 为 *
+            // 获取类上边的注解
             Anonymous controller = AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), Anonymous.class);
             Optional.ofNullable(controller).ifPresent(anonymous -> Objects.requireNonNull(info.getPatternsCondition().getPatterns())
-                    .forEach(url -> urls.add(RegExUtils.replaceAll(url, PATTERN, ASTERISK))));
+                    .forEach(url -> {
+                        // 确保URL模式以/开头
+                        if (!url.startsWith("/")) {
+                            url = "/" + url;
+                        }
+                        // 处理路径变量和通配符
+                        url = processUrlPattern(url);
+                        urls.add(url);
+                    }));
         });
+    }
+
+    /**
+     * 处理URL模式中的路径变量和通配符
+     */
+    private String processUrlPattern(String url) {
+        // 将 /** 替换为 /*
+        url = url.replace("/**", "/*");
+        // 将 {*xxx} 替换为 *
+        url = url.replaceAll("\\{\\*\\w+\\}", "*");
+        // 将 {xxx} 替换为 *
+        url = url.replaceAll("\\{\\w+\\}", "*");
+        return url;
     }
 
     @Override

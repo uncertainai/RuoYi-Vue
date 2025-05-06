@@ -47,12 +47,33 @@ user:
 
 # Spring配置
 spring:
+  # 允许循环依赖
+  main:
+    allow-circular-references: true
+  # 数据源配置
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.1.112:3031/drama_flower?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=true&serverTimezone=GMT%2B8
+    username: root
+    password: wz940179mn42086iC
+    hikari:
+      # 连接池最小空闲
+      minimum-idle: 5
+      # 连接池最大连接数
+      maximum-pool-size: 20
+      # 空闲连接最大存活时间，默认600000(10分钟)
+      idle-timeout: 600000
+      # 连接最大存活时间，默认1800000(30分钟)
+      max-lifetime: 1800000
+      # 连接超时时间，默认30000(30秒)
+      connection-timeout: 30000
+      # 用于测试连接是否可用的查询语句
+      connection-test-query: SELECT 1 FROM DUAL
   # 资源信息
   messages:
     # 国际化资源文件路径
     basename: i18n/messages
-  profiles:
-    active: druid
   # 文件上传
   servlet:
     multipart:
@@ -93,9 +114,9 @@ token:
   # 令牌自定义标识
   header: Authorization
   # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  secret: 8Zz5tw0Ionm3XPZZfN0NOml3z9FMfmpgXwovR9fp6ryDIoGRM8EPHAB6iHsc0fb
   # 令牌有效期（默认30分钟）
-  expireTime: 30
+  expireTime: 1440
 
 # MyBatis配置
 mybatis:
@@ -105,6 +126,8 @@ mybatis:
   mapperLocations: classpath*:mapper/**/*Mapper.xml
   # 加载全局的配置文件
   configLocation: classpath:mybatis/mybatis-config.xml
+  # 类型处理器包路径
+  typeHandlersPackage: com.ruoyi.common.core.mybatis.handler
 
 # PageHelper分页插件
 pagehelper:
@@ -117,7 +140,7 @@ swagger:
   # 是否开启swagger
   enabled: true
   # 请求前缀
-  pathMapping: /dev-api
+  pathMapping: /
 
 # 防止XSS攻击
 xss:

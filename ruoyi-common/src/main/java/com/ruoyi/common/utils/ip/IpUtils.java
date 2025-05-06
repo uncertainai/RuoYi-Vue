@@ -2,9 +2,11 @@ package com.ruoyi.common.utils.ip;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import com.ruoyi.common.utils.ServletUtils;
 import com.ruoyi.common.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 获取IP方法
@@ -13,12 +15,18 @@ import com.ruoyi.common.utils.StringUtils;
  */
 public class IpUtils
 {
+    private static final Logger log = LoggerFactory.getLogger(IpUtils.class);
+
     public final static String REGX_0_255 = "(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]\\d|\\d)";
     // 匹配 ip
     public final static String REGX_IP = "((" + REGX_0_255 + "\\.){3}" + REGX_0_255 + ")";
     public final static String REGX_IP_WILDCARD = "(((\\*\\.){3}\\*)|(" + REGX_0_255 + "(\\.\\*){3})|(" + REGX_0_255 + "\\." + REGX_0_255 + ")(\\.\\*){2}" + "|((" + REGX_0_255 + "\\.){3}\\*))";
     // 匹配网段
     public final static String REGX_IP_SEG = "(" + REGX_IP + "\\-" + REGX_IP + ")";
+
+    private static final String UNKNOWN = "unknown";
+    private static final String LOCALHOST = "127.0.0.1";
+    private static final String SEPARATOR = ",";
 
     /**
      * 获取客户端IP
@@ -38,34 +46,41 @@ public class IpUtils
      */
     public static String getIpAddr(HttpServletRequest request)
     {
-        if (request == null)
+        String ipAddress;
+        try
         {
-            return "unknown";
+            ipAddress = request.getHeader("x-forwarded-for");
+            if (ipAddress == null || ipAddress.length() == 0 || UNKNOWN.equalsIgnoreCase(ipAddress))
+            {
+                ipAddress = request.getHeader("Proxy-Client-IP");
+            }
+            if (ipAddress == null || ipAddress.length() == 0 || UNKNOWN.equalsIgnoreCase(ipAddress))
+            {
+                ipAddress = request.getHeader("WL-Proxy-Client-IP");
+            }
+            if (ipAddress == null || ipAddress.length() == 0 || UNKNOWN.equalsIgnoreCase(ipAddress))
+            {
+                ipAddress = request.getRemoteAddr();
+                if (LOCALHOST.equals(ipAddress))
+                {
+                    // 根据网卡取本机配置的IP
+                    ipAddress = IpUtils.getHostIp();
+                }
+            }
+            // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
+            if (ipAddress != null && ipAddress.length() > 15)
+            {
+                if (ipAddress.indexOf(SEPARATOR) > 0)
+                {
+                    ipAddress = ipAddress.substring(0, ipAddress.indexOf(","));
+                }
+            }
         }
-        String ip = request.getHeader("x-forwarded-for");
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip))
+        catch (Exception e)
         {
-            ip = request.getHeader("Proxy-Client-IP");
+            ipAddress = "";
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip))
-        {
-            ip = request.getHeader("X-Forwarded-For");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip))
-        {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip))
-        {
-            ip = request.getHeader("X-Real-IP");
-        }
-
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip))
-        {
-            ip = request.getRemoteAddr();
-        }
-
-        return "0:0:0:0:0:0:0:1".equals(ip) ? "127.0.0.1" : getMultistageReverseProxyIp(ip);
+        return ipAddress;
     }
 
     /**

@@ -7,15 +7,15 @@ import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.core.text.Convert;
+import com.ruoyi.common.constant.Constants;
 
 /**
  * 客户端工具类
@@ -135,8 +135,9 @@ public class ServletUtils
      * 
      * @param response 渲染对象
      * @param string 待渲染的字符串
+     * @return null
      */
-    public static void renderString(HttpServletResponse response, String string)
+    public static String renderString(HttpServletResponse response, String string)
     {
         try
         {
@@ -149,6 +150,7 @@ public class ServletUtils
         {
             e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -177,7 +179,11 @@ public class ServletUtils
         }
 
         String ajax = request.getParameter("__ajax");
-        return StringUtils.inStringIgnoreCase(ajax, "json", "xml");
+        if (StringUtils.inStringIgnoreCase(ajax, "json", "xml"))
+        {
+            return true;
+        }
+        return false;
     }
 
     /**

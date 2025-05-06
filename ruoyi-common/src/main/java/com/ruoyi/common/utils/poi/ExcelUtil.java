@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -83,6 +83,7 @@ import com.ruoyi.common.utils.DictUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.file.FileTypeUtils;
 import com.ruoyi.common.utils.file.FileUtils;
+import com.ruoyi.common.utils.file.MimeTypeUtils;
 import com.ruoyi.common.utils.file.ImageUtils;
 import com.ruoyi.common.utils.reflect.ReflectUtils;
 
@@ -365,11 +366,11 @@ public class ExcelUtil<T>
         Map<String, List<PictureData>> pictures = null;
         if (isXSSFWorkbook)
         {
-            pictures = getSheetPictures07((XSSFSheet) sheet, (XSSFWorkbook) wb);
+            pictures = getSheetPictures03((HSSFSheet) sheet, (HSSFWorkbook) wb);
         }
         else
         {
-            pictures = getSheetPictures03((HSSFSheet) sheet, (HSSFWorkbook) wb);
+            pictures = getSheetPictures07((XSSFSheet) sheet, (XSSFWorkbook) wb);
         }
         // 获取最后一个非空行的行下标，比如总行数为n，则返回的为n-1
         int rows = sheet.getLastRowNum();

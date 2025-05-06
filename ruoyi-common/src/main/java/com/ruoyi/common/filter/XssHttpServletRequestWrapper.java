@@ -1,11 +1,15 @@
 package com.ruoyi.common.filter;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -34,13 +38,13 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper
         if (values != null)
         {
             int length = values.length;
-            String[] escapesValues = new String[length];
+            String[] escapeValues = new String[length];
             for (int i = 0; i < length; i++)
             {
                 // 防xss攻击和过滤前后空格
-                escapesValues[i] = EscapeUtil.clean(values[i]).trim();
+                escapeValues[i] = EscapeUtil.clean(values[i]).trim();
             }
-            return escapesValues;
+            return escapeValues;
         }
         return super.getParameterValues(name);
     }
@@ -55,7 +59,7 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper
         }
 
         // 为空，直接返回
-        String json = IOUtils.toString(super.getInputStream(), "utf-8");
+        String json = getBodyString(super.getInputStream());
         if (StringUtils.isEmpty(json))
         {
             return super.getInputStream();
@@ -63,8 +67,7 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper
 
         // xss过滤
         json = EscapeUtil.clean(json).trim();
-        byte[] jsonBytes = json.getBytes("utf-8");
-        final ByteArrayInputStream bis = new ByteArrayInputStream(jsonBytes);
+        final ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         return new ServletInputStream()
         {
             @Override
@@ -77,12 +80,6 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper
             public boolean isReady()
             {
                 return true;
-            }
-
-            @Override
-            public int available() throws IOException
-            {
-                return jsonBytes.length;
             }
 
             @Override
@@ -99,13 +96,41 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper
     }
 
     /**
-     * 是否是Json请求
-     * 
-     * @param request
+     * 判断是否是json请求
      */
     public boolean isJsonRequest()
     {
-        String header = super.getHeader(HttpHeaders.CONTENT_TYPE);
-        return StringUtils.startsWithIgnoreCase(header, MediaType.APPLICATION_JSON_VALUE);
+        String header = super.getHeader("content-type");
+        return StringUtils.containsAnyIgnoreCase(header, "application/json", "text/json");
+    }
+
+    /**
+     * 获取请求体内容
+     */
+    private String getBodyString(ServletInputStream inputStream) throws IOException
+    {
+        StringBuilder sb = new StringBuilder();
+        BufferedReader reader = null;
+        try
+        {
+            reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            String line;
+            while ((line = reader.readLine()) != null)
+            {
+                sb.append(line);
+            }
+        }
+        catch (IOException e)
+        {
+            throw e;
+        }
+        finally
+        {
+            if (reader != null)
+            {
+                reader.close();
+            }
+        }
+        return sb.toString();
     }
 }
