@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.AppDramaMapper">
+    
+    <resultMap type="AppDrama" id="AppDramaResult">
+        <result property="id"    column="id"    />
+        <result property="title"    column="title"    />
+        <result property="genreId"    column="genre_id"    />
+        <result property="releaseDate"    column="release_date"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectAppDramaVo">
+        select id, title, genre_id, release_date, create_by, create_time, update_by, update_time from app_drama
+    </sql>
+
+
+
+    <select id="getSummary" parameterType="AppDrama" resultMap="AppDramaResult">
+        select
+            max(id) as id
+        from app_drama
+        <where>
+                    <if test="title != null  and title != ''"> and title = #{title}</if>
+                    <if test="genreId != null "> and genre_id = #{genreId}</if>
+                    <if test="releaseDate != null "> and release_date = #{releaseDate}</if>
+                </where>
+    </select>
+
+
+
+    <select id="summary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppDramaResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.summarySql">
+                <property name="tableName" value="app_drama"/>
+            </include>
+    </select>
+    <select id="allSummary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppDramaResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.allSummarySql">
+                <property name="tableName" value="app_drama"/>
+            </include>
+    </select>
+
+</mapper>

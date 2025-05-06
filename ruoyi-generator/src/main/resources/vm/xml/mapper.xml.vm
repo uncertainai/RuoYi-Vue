@@ -75,7 +75,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </include>
     </select>
     <select id="allSummary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="${ClassName}Result">
-            <include refid="com.ruoyi.common.mapper.CommonMapper.allSummarySql">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.allSummarySql">
                 <property name="tableName" value="${tableName}"/>
             </include>
     </select>

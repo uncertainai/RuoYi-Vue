@@ -161,7 +161,7 @@ public class ${ClassName}ServiceImpl extends BaseService<${ClassName}> implement
 #if($table.sub)
         ${className}Mapper.delete${subClassName}By${subTableFkClassName}s(${pkColumn.javaField}s);
 #end
-        return ${className}Mapper.deleteBy${pkColumn.capJavaField}s(${pkColumn.javaField}s);
+        return ${className}Mapper.deleteBatch${pkColumn.capJavaField}s(${pkColumn.javaField}s);
     }
 
     /**

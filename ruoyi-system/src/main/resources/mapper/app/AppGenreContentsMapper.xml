@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.AppGenreContentsMapper">
+    
+    <resultMap type="AppGenreContents" id="AppGenreContentsResult">
+        <result property="id"    column="id"    />
+        <result property="genreId"    column="genre_id"    />
+        <result property="languageCode"    column="language_code"    />
+        <result property="genreName"    column="genre_name"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectAppGenreContentsVo">
+        select id, genre_id, language_code, genre_name, create_by, create_time, update_by, update_time from app_genre_contents
+    </sql>
+
+
+
+    <select id="getSummary" parameterType="AppGenreContents" resultMap="AppGenreContentsResult">
+        select
+            max(id) as id
+        from app_genre_contents
+        <where>
+                    <if test="genreId != null "> and genre_id = #{genreId}</if>
+                    <if test="languageCode != null  and languageCode != ''"> and language_code = #{languageCode}</if>
+                    <if test="genreName != null  and genreName != ''"> and genre_name like concat('%', #{genreName}, '%')</if>
+                </where>
+    </select>
+
+
+
+    <select id="summary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppGenreContentsResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.summarySql">
+                <property name="tableName" value="app_genre_contents"/>
+            </include>
+    </select>
+    <select id="allSummary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppGenreContentsResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.allSummarySql">
+                <property name="tableName" value="app_genre_contents"/>
+            </include>
+    </select>
+
+</mapper>

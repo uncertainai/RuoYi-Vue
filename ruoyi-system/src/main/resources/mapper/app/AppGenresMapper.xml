@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.AppGenresMapper">
+    
+    <resultMap type="AppGenres" id="AppGenresResult">
+        <result property="id"    column="id"    />
+        <result property="defaultName"    column="default_name"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectAppGenresVo">
+        select id, default_name, create_by, create_time, update_by, update_time from app_genres
+    </sql>
+
+
+
+    <select id="getSummary" parameterType="AppGenres" resultMap="AppGenresResult">
+        select
+            max(id) as id
+        from app_genres
+        <where>
+                    <if test="defaultName != null  and defaultName != ''"> and default_name like concat('%', #{defaultName}, '%')</if>
+                </where>
+    </select>
+
+
+
+    <select id="summary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppGenresResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.summarySql">
+                <property name="tableName" value="app_genres"/>
+            </include>
+    </select>
+    <select id="allSummary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppGenresResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.allSummarySql">
+                <property name="tableName" value="app_genres"/>
+            </include>
+    </select>
+
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.AppDramaDisplayRulesMapper">
+    
+    <resultMap type="AppDramaDisplayRules" id="AppDramaDisplayRulesResult">
+        <result property="id"    column="id"    />
+        <result property="dramaId"    column="drama_id"    />
+        <result property="countryCode"    column="country_code"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectAppDramaDisplayRulesVo">
+        select id, drama_id, country_code, create_by, create_time, update_by, update_time from app_drama_display_rules
+    </sql>
+
+
+
+    <select id="getSummary" parameterType="AppDramaDisplayRules" resultMap="AppDramaDisplayRulesResult">
+        select
+            max(id) as id
+        from app_drama_display_rules
+        <where>
+                    <if test="dramaId != null "> and drama_id = #{dramaId}</if>
+                    <if test="countryCode != null  and countryCode != ''"> and country_code = #{countryCode}</if>
+                </where>
+    </select>
+
+
+
+    <select id="summary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppDramaDisplayRulesResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.summarySql">
+                <property name="tableName" value="app_drama_display_rules"/>
+            </include>
+    </select>
+    <select id="allSummary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppDramaDisplayRulesResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.allSummarySql">
+                <property name="tableName" value="app_drama_display_rules"/>
+            </include>
+    </select>
+
+</mapper>

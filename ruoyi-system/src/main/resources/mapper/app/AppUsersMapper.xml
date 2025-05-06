@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.AppUsersMapper">
+    
+    <resultMap type="AppUsers" id="AppUsersResult">
+        <result property="id"    column="id"    />
+        <result property="username"    column="username"    />
+        <result property="email"    column="email"    />
+        <result property="profilePicture"    column="profile_picture"    />
+        <result property="phoneNumber"    column="phone_number"    />
+        <result property="provider"    column="provider"    />
+        <result property="providerId"    column="provider_id"    />
+        <result property="countryCode"    column="country_code"    />
+        <result property="languageCode"    column="language_code"    />
+        <result property="accessToken"    column="access_token"    />
+        <result property="refreshToken"    column="refresh_token"    />
+        <result property="expiresAt"    column="expires_at"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectAppUsersVo">
+        select id, username, email, profile_picture, phone_number, provider, provider_id, country_code, language_code, access_token, refresh_token, expires_at, create_by, create_time, update_by, update_time from app_users
+    </sql>
+
+
+
+    <select id="getSummary" parameterType="AppUsers" resultMap="AppUsersResult">
+        select
+            max(id) as id
+        from app_users
+        <where>
+                    <if test="username != null  and username != ''"> and username like concat('%', #{username}, '%')</if>
+                    <if test="email != null  and email != ''"> and email = #{email}</if>
+                    <if test="profilePicture != null  and profilePicture != ''"> and profile_picture = #{profilePicture}</if>
+                    <if test="phoneNumber != null  and phoneNumber != ''"> and phone_number = #{phoneNumber}</if>
+                    <if test="provider != null  and provider != ''"> and provider = #{provider}</if>
+                    <if test="providerId != null  and providerId != ''"> and provider_id = #{providerId}</if>
+                    <if test="countryCode != null  and countryCode != ''"> and country_code = #{countryCode}</if>
+                    <if test="languageCode != null  and languageCode != ''"> and language_code = #{languageCode}</if>
+                    <if test="accessToken != null  and accessToken != ''"> and access_token = #{accessToken}</if>
+                    <if test="refreshToken != null  and refreshToken != ''"> and refresh_token = #{refreshToken}</if>
+                    <if test="expiresAt != null "> and expires_at = #{expiresAt}</if>
+                </where>
+    </select>
+
+
+
+    <select id="summary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppUsersResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.summarySql">
+                <property name="tableName" value="app_users"/>
+            </include>
+    </select>
+    <select id="allSummary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppUsersResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.allSummarySql">
+                <property name="tableName" value="app_users"/>
+            </include>
+    </select>
+
+</mapper>

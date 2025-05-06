@@ -1,7 +1,7 @@
 package ${packageName}.controller;
 
 import com.github.pagehelper.PageHelper;
-import com.ruoyi.admin.config.PathVariableList;
+import com.ruoyi.common.config.PathVariableList;
 import com.ruoyi.common.core.domain.SummaryRequest;
 import com.ruoyi.common.utils.SummaryColumnUtils;
 import org.springframework.web.multipart.MultipartFile;

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.AppDramaContentsMapper">
+    
+    <resultMap type="AppDramaContents" id="AppDramaContentsResult">
+        <result property="id"    column="id"    />
+        <result property="dramaId"    column="drama_id"    />
+        <result property="languageCode"    column="language_code"    />
+        <result property="title"    column="title"    />
+        <result property="description"    column="description"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectAppDramaContentsVo">
+        select id, drama_id, language_code, title, description, create_by, create_time, update_by, update_time from app_drama_contents
+    </sql>
+
+
+
+    <select id="getSummary" parameterType="AppDramaContents" resultMap="AppDramaContentsResult">
+        select
+            max(id) as id
+        from app_drama_contents
+        <where>
+                    <if test="dramaId != null "> and drama_id = #{dramaId}</if>
+                    <if test="languageCode != null  and languageCode != ''"> and language_code = #{languageCode}</if>
+                    <if test="title != null  and title != ''"> and title = #{title}</if>
+                    <if test="description != null  and description != ''"> and description = #{description}</if>
+                </where>
+    </select>
+
+
+
+    <select id="summary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppDramaContentsResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.summarySql">
+                <property name="tableName" value="app_drama_contents"/>
+            </include>
+    </select>
+    <select id="allSummary" parameterType="com.ruoyi.common.core.domain.SummaryRequest" resultMap="AppDramaContentsResult">
+            <include refid="com.ruoyi.common.core.mapper.CommonMapper.allSummarySql">
+                <property name="tableName" value="app_drama_contents"/>
+            </include>
+    </select>
+
+</mapper>
