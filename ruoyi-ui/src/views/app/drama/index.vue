@@ -928,10 +928,25 @@ export default {
     handleUpdate(row) {
       this.reset()
       const id = row.id || this.ids
+      if (!id) {
+        this.$modal.msgError("请选择要修改的数据")
+        return
+      }
       getDrama(id).then(response => {
-        this.form = response.data
-        this.open = true
-        this.title = "修改剧目"
+        if (response.code === 200) {
+          this.form = response.data
+          // 处理日期格式
+          if (this.form.releaseDate) {
+            this.form.releaseDate = this.parseTime(this.form.releaseDate, '{y}-{m}-{d}')
+          }
+          this.open = true
+          this.title = "修改剧目"
+        } else {
+          this.$modal.msgError(response.msg || "获取剧目详情失败")
+        }
+      }).catch(error => {
+        console.error("获取剧目详情失败:", error)
+        this.$modal.msgError("获取剧目详情失败")
       })
     },
     handleContentUpdate(row) {

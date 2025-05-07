@@ -37,7 +37,8 @@ public class AppDramaServiceImpl extends BaseService<AppDrama> implements IAppDr
     @Override
     public AppDrama getById(Long id)
     {
-        return appDramaMapper.selectById(id);
+        AppDrama selectById = appDramaMapper.selectById(id);
+        return selectById;
     }
 
     /**
@@ -49,7 +50,8 @@ public class AppDramaServiceImpl extends BaseService<AppDrama> implements IAppDr
     @Override
     public List<AppDrama> selectList(AppDrama query)
     {
-        return appDramaMapper.selectList(new QueryWrapper<>(query));
+        List<AppDrama> selectList = appDramaMapper.selectList(new QueryWrapper<>(query));
+        return selectList;
     }
 
 
