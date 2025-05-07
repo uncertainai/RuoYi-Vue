@@ -6,8 +6,8 @@ import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.system.mapper.AppGenreContentsMapper;
 import com.ruoyi.system.domain.AppGenreContents;
+import com.ruoyi.system.mapper.AppGenreContentsMapper;
 import com.ruoyi.system.service.IAppGenreContentsService;
 import com.ruoyi.common.core.service.BaseService;
 

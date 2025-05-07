@@ -129,6 +129,14 @@ mybatis:
   # 类型处理器包路径
   typeHandlersPackage: com.ruoyi.common.core.mybatis.handler
 
+
+mybatis-plus:
+  mapperLocations: classpath*:mapper/**/*Mapper.xml
+  typeAliasesPackage: com.ruoyi.**.domain
+  global-config:
+    db-config:
+      id-type: input
+
 # PageHelper分页插件
 pagehelper:
   helperDialect: mysql

@@ -23,6 +23,7 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 
 /**
  * Mybatis支持*匹配扫描包
@@ -122,7 +123,8 @@ public class MyBatisConfig
         typeAliasesPackage = setTypeAliasesPackage(typeAliasesPackage);
         VFS.addImplClass(SpringBootVFS.class);
 
-        SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
+        // 使用 MybatisSqlSessionFactoryBean 替代 SqlSessionFactoryBean
+        MybatisSqlSessionFactoryBean sessionFactory = new MybatisSqlSessionFactoryBean();
         sessionFactory.setDataSource(dataSource);
         sessionFactory.setTypeAliasesPackage(typeAliasesPackage);
         sessionFactory.setMapperLocations(resolveMapperLocations(StringUtils.split(mapperLocations, ",")));

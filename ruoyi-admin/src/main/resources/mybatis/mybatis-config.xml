@@ -17,4 +17,9 @@ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
 		<!-- <setting name="mapUnderscoreToCamelCase" value="true"/> -->
 	</settings>
 	
+    <!-- 类型处理器 -->
+    <typeHandlers>
+        <typeHandler handler="com.ruoyi.common.utils.MapTypeHandler"/>
+    </typeHandlers>
+	
 </configuration>

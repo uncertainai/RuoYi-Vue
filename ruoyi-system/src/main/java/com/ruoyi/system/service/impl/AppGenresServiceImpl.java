@@ -49,9 +49,14 @@ public class AppGenresServiceImpl extends BaseService<AppGenres> implements IApp
     @Override
     public List<AppGenres> selectList(AppGenres query)
     {
-        return appGenresMapper.selectList(new QueryWrapper<>(query));
+        QueryWrapper<AppGenres> queryWrapper = new QueryWrapper<>();
+        if (query != null) {
+            if (query.getDefaultName() != null && !query.getDefaultName().isEmpty()) {
+                queryWrapper.like("default_name", query.getDefaultName());
+            }
+        }
+        return appGenresMapper.selectList(queryWrapper);
     }
-
 
     /**
      * 查询剧目类型数据汇总
@@ -64,8 +69,6 @@ public class AppGenresServiceImpl extends BaseService<AppGenres> implements IApp
     {
         return appGenresMapper.getSummary(query);
     }
-
-
 
     /**
      * 查询自定义分析数据
